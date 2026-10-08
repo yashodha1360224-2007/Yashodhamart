@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { getStaticProducts } from '@/data/staticData';
 
 export const dynamic = 'force-dynamic';
 
@@ -101,16 +102,46 @@ export async function GET(request: Request) {
       }),
     ]);
 
+    if (products.length === 0) {
+      const staticResult = getStaticProducts({
+        q: query,
+        category: categorySlug,
+        subcategory: subcategorySlug,
+        minPrice,
+        maxPrice,
+        minRating,
+        minDiscount,
+        inStockOnly,
+        sortBy,
+        isFeatured,
+        isNewArrival,
+      });
+      return NextResponse.json(staticResult);
+    }
+
     return NextResponse.json({
       products,
       categories,
       total: products.length,
     });
   } catch (error) {
-    console.error('Fetch products error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch products.' },
-      { status: 500 }
-    );
+    console.error('Fetch products error, falling back to static:', error);
+    try {
+      const { searchParams } = new URL(request.url);
+      const staticResult = getStaticProducts({
+        q: searchParams.get('q')?.trim() || '',
+        category: searchParams.get('category') || '',
+        subcategory: searchParams.get('subcategory') || '',
+        minPrice: searchParams.get('minPrice'),
+        maxPrice: searchParams.get('maxPrice'),
+        minRating: searchParams.get('minRating'),
+        minDiscount: searchParams.get('minDiscount'),
+        inStockOnly: searchParams.get('inStock') === 'true',
+        sortBy: searchParams.get('sort') || 'popular',
+      });
+      return NextResponse.json(staticResult);
+    } catch (fallbackError) {
+      return NextResponse.json({ products: [], categories: [], total: 0 });
+    }
   }
 }

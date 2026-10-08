@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { getStaticProductById } from '@/data/staticData';
 
 export async function GET(
   request: Request,
@@ -25,6 +26,10 @@ export async function GET(
     });
 
     if (!product || !product.isActive) {
+      const staticData = getStaticProductById(id);
+      if (staticData) {
+        return NextResponse.json(staticData);
+      }
       return NextResponse.json({ error: "Product not found." }, { status: 404 });
     }
 
@@ -39,7 +44,11 @@ export async function GET(
 
     return NextResponse.json({ product, relatedProducts });
   } catch (error) {
-    console.error("Single product API error:", error);
+    console.error("Single product API error, falling back to static:", error);
+    const staticData = getStaticProductById(params.id);
+    if (staticData) {
+      return NextResponse.json(staticData);
+    }
     return NextResponse.json({ error: "Failed to fetch product details." }, { status: 500 });
   }
 }

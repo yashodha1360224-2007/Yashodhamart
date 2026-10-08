@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { getStaticCategories } from '@/data/staticData';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,6 +27,8 @@ export async function GET(request: Request) {
       });
 
       if (!category) {
+        const staticCat = getStaticCategories(slug);
+        if (staticCat) return NextResponse.json({ category: staticCat });
         return NextResponse.json({ error: 'Category not found.' }, { status: 404 });
       }
 
@@ -51,9 +54,24 @@ export async function GET(request: Request) {
       orderBy: { name: 'asc' },
     });
 
+    if (categories.length === 0) {
+      return NextResponse.json({ categories: getStaticCategories() });
+    }
+
     return NextResponse.json({ categories });
   } catch (error) {
-    console.error('Fetch categories error:', error);
-    return NextResponse.json({ error: 'Failed to fetch categories.' }, { status: 500 });
+    console.error('Fetch categories error, falling back to static:', error);
+    try {
+      const { searchParams } = new URL(request.url);
+      const slug = searchParams.get('slug');
+      if (slug) {
+        const staticCat = getStaticCategories(slug);
+        if (staticCat) return NextResponse.json({ category: staticCat });
+        return NextResponse.json({ error: 'Category not found.' }, { status: 404 });
+      }
+      return NextResponse.json({ categories: getStaticCategories() });
+    } catch (fallbackError) {
+      return NextResponse.json({ error: 'Failed to fetch categories.' }, { status: 500 });
+    }
   }
 }

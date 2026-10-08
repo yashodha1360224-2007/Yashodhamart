@@ -5,6 +5,8 @@ import ProductCard from '@/components/ProductCard';
 import { prisma } from '@/lib/db';
 import { Flame, Sparkles, TrendingUp, Tag, ShieldCheck } from 'lucide-react';
 
+import { getStaticHomePageData } from '@/data/staticData';
+
 export const revalidate = 0; // Dynamic server rendering
 
 export default async function HomePage() {
@@ -36,6 +38,15 @@ export default async function HomePage() {
     ]);
   } catch (error) {
     console.error('Error loading homepage data from database:', error);
+  }
+
+  // Fallback to static data if database is empty or unavailable
+  if (categories.length === 0 || featuredProducts.length === 0) {
+    const staticData = getStaticHomePageData();
+    if (categories.length === 0) categories = staticData.categories;
+    if (featuredProducts.length === 0) featuredProducts = staticData.featuredProducts;
+    if (newArrivals.length === 0) newArrivals = staticData.newArrivals;
+    if (popularProducts.length === 0) popularProducts = staticData.popularProducts;
   }
 
   return (
