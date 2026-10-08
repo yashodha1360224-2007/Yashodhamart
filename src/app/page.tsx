@@ -8,26 +8,35 @@ import { Flame, Sparkles, TrendingUp, Tag, ShieldCheck } from 'lucide-react';
 export const revalidate = 0; // Dynamic server rendering
 
 export default async function HomePage() {
-  const [categories, featuredProducts, newArrivals, popularProducts] = await Promise.all([
-    prisma.category.findMany({ orderBy: { name: 'asc' } }),
-    prisma.product.findMany({
-      where: { isFeatured: true, isActive: true },
-      take: 8,
-      include: { category: true },
-    }),
-    prisma.product.findMany({
-      where: { isNewArrival: true, isActive: true },
-      take: 8,
-      orderBy: { createdAt: 'desc' },
-      include: { category: true },
-    }),
-    prisma.product.findMany({
-      where: { isActive: true },
-      take: 8,
-      orderBy: { reviewCount: 'desc' },
-      include: { category: true },
-    }),
-  ]);
+  let categories: any[] = [];
+  let featuredProducts: any[] = [];
+  let newArrivals: any[] = [];
+  let popularProducts: any[] = [];
+
+  try {
+    [categories, featuredProducts, newArrivals, popularProducts] = await Promise.all([
+      prisma.category.findMany({ orderBy: { name: 'asc' } }),
+      prisma.product.findMany({
+        where: { isFeatured: true, isActive: true },
+        take: 8,
+        include: { category: true },
+      }),
+      prisma.product.findMany({
+        where: { isNewArrival: true, isActive: true },
+        take: 8,
+        orderBy: { createdAt: 'desc' },
+        include: { category: true },
+      }),
+      prisma.product.findMany({
+        where: { isActive: true },
+        take: 8,
+        orderBy: { reviewCount: 'desc' },
+        include: { category: true },
+      }),
+    ]);
+  } catch (error) {
+    console.error('Error loading homepage data from database:', error);
+  }
 
   return (
     <div className="space-y-12">
