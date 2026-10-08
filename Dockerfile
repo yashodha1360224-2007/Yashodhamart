@@ -14,14 +14,14 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Copy package manifests
+# Copy package manifests AND Prisma schema first
 COPY package.json package-lock.json ./
-
-# Install dependencies
-RUN npm install --include=dev
-
-# Copy Prisma schema and generate Prisma Client
 COPY prisma ./prisma/
+
+# Install dependencies (ignoring scripts during install to avoid premature postinstall hooks)
+RUN npm install --include=dev --ignore-scripts
+
+# Generate Prisma Client explicitly
 RUN npx prisma generate
 
 # Copy the rest of the application code
