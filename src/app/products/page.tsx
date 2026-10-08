@@ -37,6 +37,7 @@ function ProductsContent() {
 
   const query = searchParams.get('q') || '';
   const category = searchParams.get('category') || '';
+  const subcategory = searchParams.get('subcategory') || '';
   const minPrice = searchParams.get('minPrice') || '';
   const maxPrice = searchParams.get('maxPrice') || '';
   const minRating = searchParams.get('minRating') || '';
@@ -52,6 +53,7 @@ function ProductsContent() {
       const params = new URLSearchParams();
       if (query) params.set('q', query);
       if (category) params.set('category', category);
+      if (subcategory) params.set('subcategory', subcategory);
       if (minPrice) params.set('minPrice', minPrice);
       if (maxPrice) params.set('maxPrice', maxPrice);
       if (minRating) params.set('minRating', minRating);
@@ -72,7 +74,7 @@ function ProductsContent() {
     } finally {
       setLoading(false);
     }
-  }, [query, category, minPrice, maxPrice, minRating, minDiscount, inStock, sort, featured, newArrival]);
+  }, [query, category, subcategory, minPrice, maxPrice, minRating, minDiscount, inStock, sort, featured, newArrival]);
 
   useEffect(() => {
     fetchProducts();
@@ -121,7 +123,7 @@ function ProductsContent() {
         />
       </div>
 
-      {(query || category || minPrice || maxPrice || minRating || minDiscount || inStock) && (
+      {(query || category || subcategory || minPrice || maxPrice || minRating || minDiscount || inStock) && (
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <span className="font-bold text-slate-500">Active Filters:</span>
 
@@ -137,7 +139,16 @@ function ProductsContent() {
           {category && (
             <span className="bg-slate-100 text-slate-800 font-bold px-3 py-1 rounded-full border border-slate-200 flex items-center gap-1">
               Category: {activeCategoryObj?.name || category}
-              <button onClick={() => updateURLParams({ category: undefined })} className="hover:text-rose-600">
+              <button onClick={() => updateURLParams({ category: undefined, subcategory: undefined })} className="hover:text-rose-600">
+                <X className="w-3 h-3" />
+              </button>
+            </span>
+          )}
+
+          {subcategory && (
+            <span className="bg-brand-50 text-brand-700 font-bold px-3 py-1 rounded-full border border-brand-200 flex items-center gap-1">
+              Subcategory: {subcategory}
+              <button onClick={() => updateURLParams({ subcategory: undefined })} className="hover:text-rose-600">
                 <X className="w-3 h-3" />
               </button>
             </span>
@@ -166,6 +177,7 @@ function ProductsContent() {
           <ProductFilterSidebar
             categories={categories}
             selectedCategory={category}
+            selectedSubcategory={subcategory}
             minPrice={minPrice}
             maxPrice={maxPrice}
             minRating={minRating}
@@ -174,6 +186,7 @@ function ProductsContent() {
             onFilterChange={(filters) =>
               updateURLParams({
                 category: filters.category,
+                subcategory: filters.subcategory,
                 minPrice: filters.minPrice,
                 maxPrice: filters.maxPrice,
                 minRating: filters.minRating,

@@ -37,26 +37,47 @@ export async function PATCH(request: Request) {
   if (!admin) return NextResponse.json({ error: "Access denied." }, { status: 403 });
 
   try {
-    const { orderId, orderStatus } = await request.json();
+    const { orderId, orderStatus, paymentStatus } = await request.json();
 
-    if (!orderId || !orderStatus) {
-      return NextResponse.json({ error: "Order ID and new status are required." }, { status: 400 });
+    if (!orderId) {
+      return NextResponse.json({ error: "Order ID is required." }, { status: 400 });
     }
 
     const validStatuses = ['Pending', 'Confirmed', 'Packed', 'Shipped', 'Out for Delivery', 'Delivered', 'Cancelled'];
-    if (!validStatuses.includes(orderStatus)) {
-      return NextResponse.json({ error: "Invalid order status." }, { status: 400 });
+    const validPaymentStatuses = ['PENDING', 'CONFIRMATION_SUBMITTED', 'PAID', 'FAILED'];
+
+    const updateData: any = {};
+    if (orderStatus) {
+      if (!validStatuses.includes(orderStatus)) {
+        return NextResponse.json({ error: "Invalid order status." }, { status: 400 });
+      }
+      updateData.orderStatus = orderStatus;
+      if (orderStatus === 'Delivered') {
+        updateData.paymentStatus = 'PAID';
+        updateData.paidAt = new Date();
+      }
+    }
+
+    if (paymentStatus) {
+      if (!validPaymentStatuses.includes(paymentStatus)) {
+        return NextResponse.json({ error: "Invalid payment status." }, { status: 400 });
+      }
+      updateData.paymentStatus = paymentStatus;
+      if (paymentStatus === 'PAID') {
+        updateData.paidAt = new Date();
+      }
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      return NextResponse.json({ error: "No update fields provided." }, { status: 400 });
     }
 
     const updated = await prisma.order.update({
       where: { id: orderId },
-      data: {
-        orderStatus,
-        paymentStatus: orderStatus === 'Delivered' ? 'PAID' : undefined,
-      },
+      data: updateData,
     });
 
-    return NextResponse.json({ message: `Order status updated to "${orderStatus}".`, order: updated });
+    return NextResponse.json({ message: "Order updated successfully.", order: updated });
   } catch (error) {
     console.error("Admin order update error:", error);
     return NextResponse.json({ error: "Failed to update order status." }, { status: 500 });

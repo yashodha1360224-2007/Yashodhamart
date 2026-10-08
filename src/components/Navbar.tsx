@@ -16,7 +16,8 @@ import {
   ChevronDown,
   Sparkles,
   MapPin,
-  Clock
+  Clock,
+  Layers
 } from 'lucide-react';
 
 interface UserState {
@@ -37,16 +38,22 @@ export default function Navbar() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   const categories = [
-    { name: 'All Products', slug: '' },
-    { name: 'Fashion', slug: 'fashion' },
-    { name: 'Electronics', slug: 'electronics' },
-    { name: 'Mobile Accessories', slug: 'mobile-accessories' },
-    { name: 'Home & Kitchen', slug: 'home-kitchen' },
-    { name: 'Beauty', slug: 'beauty' },
-    { name: 'Books', slug: 'books' },
-    { name: 'Grocery', slug: 'grocery' },
-    { name: 'Footwear', slug: 'footwear' },
-    { name: 'Accessories', slug: 'accessories' },
+    { name: 'All Products', slug: '', path: '/products' },
+    { name: 'Grocery', slug: 'grocery', path: '/categories/grocery' },
+    { name: 'Fruits & Veg', slug: 'fruits-vegetables', path: '/categories/fruits-vegetables' },
+    { name: 'Dairy & Bakery', slug: 'dairy-bakery', path: '/categories/dairy-bakery' },
+    { name: 'Electronics', slug: 'electronics', path: '/categories/electronics' },
+    { name: 'Fashion', slug: 'fashion', path: '/categories/fashion' },
+    { name: 'Footwear', slug: 'footwear', path: '/categories/footwear' },
+    { name: 'Beauty & Care', slug: 'beauty-personal-care', path: '/categories/beauty-personal-care' },
+    { name: 'Home & Kitchen', slug: 'home-kitchen', path: '/categories/home-kitchen' },
+    { name: 'Appliances', slug: 'appliances', path: '/categories/appliances' },
+    { name: 'Books', slug: 'books', path: '/categories/books' },
+    { name: 'Toys & Games', slug: 'toys-games', path: '/categories/toys-games' },
+    { name: 'Baby Products', slug: 'baby-products', path: '/categories/baby-products' },
+    { name: 'Sports & Fitness', slug: 'sports-fitness', path: '/categories/sports-fitness' },
+    { name: 'Jewellery', slug: 'jewellery-accessories', path: '/categories/jewellery-accessories' },
+    { name: 'Automotive', slug: 'automotive', path: '/categories/automotive' },
   ];
 
   const fetchAuthMe = async () => {
@@ -293,10 +300,17 @@ export default function Navbar() {
         {/* Category Navigation Bar */}
         <nav className="bg-slate-900 text-white overflow-x-auto no-scrollbar hidden md:block">
           <div className="max-w-7xl mx-auto px-4 flex items-center space-x-6 text-xs font-medium py-2.5">
+            <Link
+              href="/categories"
+              className="bg-brand-600 hover:bg-brand-700 text-white px-3 py-1 rounded-lg font-bold flex items-center gap-1.5 whitespace-nowrap transition shadow-xs"
+            >
+              <Layers className="w-3.5 h-3.5" /> All Departments
+            </Link>
+
             {categories.map((cat) => (
               <Link
                 key={cat.slug}
-                href={cat.slug ? `/products?category=${cat.slug}` : '/products'}
+                href={cat.path}
                 className="whitespace-nowrap hover:text-brand-400 transition flex items-center gap-1.5"
               >
                 {cat.slug === '' && <Sparkles className="w-3.5 h-3.5 text-brand-400" />}
@@ -310,12 +324,21 @@ export default function Navbar() {
       {/* Mobile Menu Drawer */}
       {isMobileMenuOpen && (
         <div className="md:hidden bg-white border-b border-slate-200 px-4 py-4 space-y-3">
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Browse Categories</p>
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Browse Categories</p>
+            <Link
+              href="/categories"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="text-xs font-bold text-brand-600 hover:underline flex items-center gap-1"
+            >
+              All 20 Departments →
+            </Link>
+          </div>
           <div className="grid grid-cols-2 gap-2 text-xs font-medium">
             {categories.map((cat) => (
               <Link
                 key={cat.slug}
-                href={cat.slug ? `/products?category=${cat.slug}` : '/products'}
+                href={cat.path}
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="p-2 rounded-lg bg-slate-50 hover:bg-brand-50 hover:text-brand-600 transition"
               >

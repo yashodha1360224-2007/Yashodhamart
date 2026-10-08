@@ -5,10 +5,17 @@ import Image from 'next/image';
 import AdminSidebar from '@/components/AdminSidebar';
 import { Package, Plus, Edit, Trash2, CheckCircle2, AlertCircle, X } from 'lucide-react';
 
+interface Subcategory {
+  id: string;
+  name: string;
+  slug: string;
+}
+
 interface Category {
   id: string;
   name: string;
   slug: string;
+  subcategories?: Subcategory[];
 }
 
 interface Product {
@@ -19,11 +26,13 @@ interface Product {
   discountPercent: number;
   stock: number;
   categoryId: string;
+  subcategoryId?: string | null;
   images: string;
   isFeatured: boolean;
   isNewArrival: boolean;
   isActive: boolean;
   category?: Category;
+  subcategory?: Subcategory | null;
 }
 
 export default function AdminProductsPage() {
@@ -41,6 +50,7 @@ export default function AdminProductsPage() {
     discountPercent: '0',
     stock: '10',
     categoryId: '',
+    subcategoryId: '',
     imageUrl: '',
     isFeatured: false,
     isNewArrival: false,
@@ -88,6 +98,7 @@ export default function AdminProductsPage() {
       discountPercent: '0',
       stock: '10',
       categoryId: categories[0]?.id || '',
+      subcategoryId: '',
       imageUrl: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e',
       isFeatured: false,
       isNewArrival: true,
@@ -107,6 +118,7 @@ export default function AdminProductsPage() {
       discountPercent: String(prod.discountPercent),
       stock: String(prod.stock),
       categoryId: prod.categoryId,
+      subcategoryId: prod.subcategoryId || '',
       imageUrl: imgs[0] || '',
       isFeatured: prod.isFeatured,
       isNewArrival: prod.isNewArrival,
@@ -134,6 +146,7 @@ export default function AdminProductsPage() {
         discountPercent: formData.discountPercent,
         stock: formData.stock,
         categoryId: formData.categoryId,
+        subcategoryId: formData.subcategoryId || null,
         images: JSON.stringify([formData.imageUrl]),
         isFeatured: formData.isFeatured,
         isNewArrival: formData.isNewArrival,
@@ -232,7 +245,14 @@ export default function AdminProductsPage() {
                         </div>
                       </td>
 
-                      <td className="p-3 font-semibold text-slate-700">{prod.category?.name || 'General'}</td>
+                      <td className="p-3 font-semibold text-slate-700">
+                        <div>{prod.category?.name || 'General'}</div>
+                        {prod.subcategory && (
+                          <span className="text-[10px] text-brand-600 font-medium block">
+                            ↳ {prod.subcategory.name}
+                          </span>
+                        )}
+                      </td>
 
                       <td className="p-3 font-black text-slate-900">₹{prod.price.toLocaleString('en-IN')}</td>
 
@@ -322,7 +342,10 @@ export default function AdminProductsPage() {
                     <label className="font-bold text-slate-700 block mb-1">Category *</label>
                     <select
                       value={formData.categoryId}
-                      onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
+                      onChange={(e) => {
+                        const newCatId = e.target.value;
+                        setFormData({ ...formData, categoryId: newCatId, subcategoryId: '' });
+                      }}
                       className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none"
                       required
                     >
@@ -335,15 +358,33 @@ export default function AdminProductsPage() {
                   </div>
 
                   <div>
-                    <label className="font-bold text-slate-700 block mb-1">Image URL *</label>
-                    <input
-                      type="text"
-                      value={formData.imageUrl}
-                      onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+                    <label className="font-bold text-slate-700 block mb-1">Subcategory</label>
+                    <select
+                      value={formData.subcategoryId}
+                      onChange={(e) => setFormData({ ...formData, subcategoryId: e.target.value })}
                       className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                      required
-                    />
+                    >
+                      <option value="">General / None</option>
+                      {categories
+                        .find((c) => c.id === formData.categoryId)
+                        ?.subcategories?.map((sub) => (
+                          <option key={sub.id} value={sub.id}>
+                            {sub.name}
+                          </option>
+                        ))}
+                    </select>
                   </div>
+                </div>
+
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">Image URL *</label>
+                  <input
+                    type="text"
+                    value={formData.imageUrl}
+                    onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none"
+                    required
+                  />
                 </div>
 
                 <div className="grid grid-cols-3 gap-3">

@@ -21,6 +21,8 @@ interface Order {
   finalAmount: number;
   paymentMethod: string;
   paymentStatus: string;
+  transactionReference?: string | null;
+  paidAt?: string | null;
   orderStatus: string;
   shippingAddress: string;
   createdAt: string;
@@ -29,6 +31,7 @@ interface Order {
 }
 
 const statusOptions = ['Pending', 'Confirmed', 'Packed', 'Shipped', 'Out for Delivery', 'Delivered', 'Cancelled'];
+const paymentStatusOptions = ['PENDING', 'CONFIRMATION_SUBMITTED', 'PAID', 'FAILED'];
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -75,6 +78,25 @@ export default function AdminOrdersPage() {
       }
     } catch {
       alert('Error updating order status.');
+    }
+  };
+
+  const handleUpdatePaymentStatus = async (orderId: string, newPaymentStatus: string) => {
+    try {
+      const res = await fetch('/api/admin/orders', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId, paymentStatus: newPaymentStatus }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || 'Failed to update payment status.');
+      } else {
+        fetchOrders();
+      }
+    } catch {
+      alert('Error updating payment status.');
     }
   };
 
@@ -136,37 +158,73 @@ export default function AdminOrdersPage() {
                 >
                   <div className="flex flex-col sm:flex-row justify-between sm:items-center border-b border-slate-100 pb-3 gap-2">
                     <div>
-                      <span className="text-xs font-black font-mono text-slate-900">
-                        Order #{ord.orderNumber}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-black font-mono text-slate-900">
+                          Order #{ord.orderNumber}
+                        </span>
+                        <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${
+                          ord.paymentMethod === 'QR_DEMO'
+                            ? 'bg-purple-100 text-purple-800 border border-purple-200'
+                            : 'bg-slate-100 text-slate-700 border border-slate-200'
+                        }`}>
+                          {ord.paymentMethod === 'QR_DEMO' ? '📱 QR Demo' : '💵 COD'}
+                        </span>
+                      </div>
                       <p className="text-[11px] text-slate-400">
                         Placed by <strong className="text-slate-800">{ord.user?.name}</strong> ({ord.user?.email}) on {new Date(ord.createdAt).toLocaleString('en-IN')}
                       </p>
                     </div>
 
-                    <div className="flex items-center gap-4 text-xs">
+                    <div className="flex flex-wrap items-center gap-3 text-xs">
                       <span className="font-black text-slate-900 text-sm">
                         ₹{ord.finalAmount.toLocaleString('en-IN')}
                       </span>
 
-                      {/* Status Selector Dropdown */}
-                      <select
-                        value={ord.orderStatus}
-                        onChange={(e) => handleUpdateStatus(ord.id, e.target.value)}
-                        className={`font-extrabold px-3 py-1.5 rounded-xl border text-xs cursor-pointer ${
-                          ord.orderStatus === 'Delivered'
-                            ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
-                            : ord.orderStatus === 'Cancelled'
-                            ? 'bg-rose-50 text-rose-800 border-rose-300'
-                            : 'bg-amber-50 text-amber-900 border-amber-300'
-                        }`}
-                      >
-                        {statusOptions.map((st) => (
-                          <option key={st} value={st}>
-                            Status: {st}
-                          </option>
-                        ))}
-                      </select>
+                      {/* Payment Status Dropdown */}
+                      <div className="flex items-center gap-1">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase">Pay:</span>
+                        <select
+                          value={ord.paymentStatus}
+                          onChange={(e) => handleUpdatePaymentStatus(ord.id, e.target.value)}
+                          className={`font-black px-2.5 py-1.5 rounded-xl border text-[11px] cursor-pointer ${
+                            ord.paymentStatus === 'PAID'
+                              ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                              : ord.paymentStatus === 'CONFIRMATION_SUBMITTED'
+                              ? 'bg-purple-50 text-purple-800 border-purple-300'
+                              : ord.paymentStatus === 'FAILED'
+                              ? 'bg-rose-50 text-rose-800 border-rose-300'
+                              : 'bg-amber-50 text-amber-900 border-amber-300'
+                          }`}
+                        >
+                          {paymentStatusOptions.map((ps) => (
+                            <option key={ps} value={ps}>
+                              {ps === 'CONFIRMATION_SUBMITTED' ? 'DEMO SUBMITTED' : ps}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Order Status Selector Dropdown */}
+                      <div className="flex items-center gap-1">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase">Fulfillment:</span>
+                        <select
+                          value={ord.orderStatus}
+                          onChange={(e) => handleUpdateStatus(ord.id, e.target.value)}
+                          className={`font-black px-2.5 py-1.5 rounded-xl border text-[11px] cursor-pointer ${
+                            ord.orderStatus === 'Delivered'
+                              ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                              : ord.orderStatus === 'Cancelled'
+                              ? 'bg-rose-50 text-rose-800 border-rose-300'
+                              : 'bg-sky-50 text-sky-900 border-sky-300'
+                          }`}
+                        >
+                          {statusOptions.map((st) => (
+                            <option key={st} value={st}>
+                              {st}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                     </div>
                   </div>
 
@@ -174,7 +232,7 @@ export default function AdminOrdersPage() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                     <div className="space-y-2">
                       <span className="font-bold text-slate-500 uppercase text-[10px] tracking-wider block">
-                        Ordered Items
+                        Ordered Items ({ord.items.length})
                       </span>
                       {ord.items.map((item) => (
                         <div key={item.id} className="flex items-center gap-3 p-2 bg-slate-50 rounded-xl border border-slate-100">
@@ -189,17 +247,43 @@ export default function AdminOrdersPage() {
                       ))}
                     </div>
 
-                    <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100 space-y-1">
+                    <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100 space-y-1.5">
                       <span className="font-bold text-slate-500 uppercase text-[10px] tracking-wider block">
-                        Shipping Location
+                        Shipping & Payment Details
                       </span>
                       <p className="font-bold text-slate-800">{shipping.fullName} ({shipping.phone})</p>
                       <p className="text-slate-600 text-[11px]">
                         {shipping.houseBuilding}, {shipping.street}, {shipping.area}, {shipping.city}, {shipping.state} - {shipping.pincode}
                       </p>
-                      <p className="text-slate-500 text-[11px] pt-1">
-                        Payment: <strong>{ord.paymentMethod}</strong> ({ord.paymentStatus})
-                      </p>
+                      <div className="pt-2 border-t border-slate-200/60 text-[11px] space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-slate-500">Method:</span>
+                          <span className="font-bold text-slate-800">
+                            {ord.paymentMethod === 'QR_DEMO' ? 'QR Code / UPI Demo Payment' : 'Cash on Delivery'}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-slate-500">Payment Status:</span>
+                          <span className={`font-black ${
+                            ord.paymentStatus === 'PAID' ? 'text-emerald-700' :
+                            ord.paymentStatus === 'CONFIRMATION_SUBMITTED' ? 'text-purple-700' : 'text-amber-700'
+                          }`}>
+                            {ord.paymentStatus}
+                          </span>
+                        </div>
+                        {ord.transactionReference && (
+                          <div className="flex items-center justify-between">
+                            <span className="text-slate-500">Ref / UTR:</span>
+                            <span className="font-mono font-bold text-slate-800">{ord.transactionReference}</span>
+                          </div>
+                        )}
+                        {ord.paidAt && (
+                          <div className="flex items-center justify-between">
+                            <span className="text-slate-500">Paid Timestamp:</span>
+                            <span className="text-slate-600">{new Date(ord.paidAt).toLocaleString('en-IN')}</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>

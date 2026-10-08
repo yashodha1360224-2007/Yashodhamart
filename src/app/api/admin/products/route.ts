@@ -7,7 +7,7 @@ export async function GET() {
   if (!admin) return NextResponse.json({ error: "Access denied." }, { status: 403 });
 
   const products = await prisma.product.findMany({
-    include: { category: true },
+    include: { category: true, subcategory: true },
     orderBy: { createdAt: 'desc' },
   });
 
@@ -20,7 +20,7 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { name, description, price, discountPercent, stock, categoryId, images, isFeatured, isNewArrival } = body;
+    const { name, description, price, discountPercent, stock, categoryId, subcategoryId, images, isFeatured, isNewArrival } = body;
 
     if (!name?.trim() || !description?.trim() || !price || !categoryId || !images) {
       return NextResponse.json({ error: "Please fill in all required fields." }, { status: 400 });
@@ -37,6 +37,7 @@ export async function POST(request: Request) {
         discountPercent: parseFloat(discountPercent || 0),
         stock: parseInt(stock || 0),
         categoryId,
+        subcategoryId: subcategoryId || null,
         images: typeof images === 'string' ? images : JSON.stringify(images),
         isFeatured: Boolean(isFeatured),
         isNewArrival: Boolean(isNewArrival),
@@ -57,7 +58,7 @@ export async function PUT(request: Request) {
 
   try {
     const body = await request.json();
-    const { id, name, description, price, discountPercent, stock, categoryId, images, isFeatured, isNewArrival, isActive } = body;
+    const { id, name, description, price, discountPercent, stock, categoryId, subcategoryId, images, isFeatured, isNewArrival, isActive } = body;
 
     if (!id) return NextResponse.json({ error: "Product ID required." }, { status: 400 });
 
@@ -70,6 +71,7 @@ export async function PUT(request: Request) {
         discountPercent: parseFloat(discountPercent || 0),
         stock: parseInt(stock || 0),
         categoryId,
+        subcategoryId: subcategoryId !== undefined ? (subcategoryId || null) : undefined,
         images: typeof images === 'string' ? images : JSON.stringify(images),
         isFeatured: Boolean(isFeatured),
         isNewArrival: Boolean(isNewArrival),

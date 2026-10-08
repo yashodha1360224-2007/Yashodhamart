@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import AddressCardModal from '@/components/AddressCardModal';
+import QRCodeDisplay from '@/components/QRCodeDisplay';
 import {
   CheckCircle,
   MapPin,
@@ -13,7 +14,10 @@ import {
   Plus,
   ArrowRight,
   ShieldCheck,
-  AlertCircle
+  AlertCircle,
+  QrCode,
+  Sparkles,
+  Info
 } from 'lucide-react';
 
 interface CartItem {
@@ -48,18 +52,24 @@ export default function CheckoutPage() {
   const [total, setTotal] = useState(0);
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string>('');
-  const [paymentMethod, setPaymentMethod] = useState<'COD' | 'ONLINE_DEMO'>('COD');
+  const [paymentMethod, setPaymentMethod] = useState<'COD' | 'QR_DEMO'>('COD');
   const [loading, setLoading] = useState(true);
   const [placingOrder, setPlacingOrder] = useState(false);
   const [showAddressModal, setShowAddressModal] = useState(false);
   const [completedOrder, setCompletedOrder] = useState<any>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  // Configurable UPI config
+  const [upiId, setUpiId] = useState('demo-yashodhamart@okhdfcbank');
+  // Pending reference order number for the dynamic QR code
+  const [pendingOrderNumber, setPendingOrderNumber] = useState('');
+
   const fetchCheckoutData = useCallback(async () => {
     try {
-      const [cartRes, addrRes] = await Promise.all([
+      const [cartRes, addrRes, payConfigRes] = await Promise.all([
         fetch('/api/cart'),
         fetch('/api/addresses'),
+        fetch('/api/payment/config'),
       ]);
 
       if (cartRes.ok) {
@@ -81,6 +91,14 @@ export default function CheckoutPage() {
         const defaultAddr = addrData.addresses.find((a: Address) => a.isDefault) || addrData.addresses[0];
         if (defaultAddr) setSelectedAddressId(defaultAddr.id);
       }
+
+      if (payConfigRes.ok) {
+        const configData = await payConfigRes.json();
+        if (configData.upiId) setUpiId(configData.upiId);
+      }
+
+      // Generate a consistent order ID reference for the session
+      setPendingOrderNumber(`YM-ORD-${Date.now().toString().slice(-6)}${Math.floor(10 + Math.random() * 90)}`);
     } catch (error) {
       console.error('Failed to load checkout data:', error);
     } finally {
@@ -92,7 +110,7 @@ export default function CheckoutPage() {
     fetchCheckoutData();
   }, [fetchCheckoutData]);
 
-  const handlePlaceOrder = async () => {
+  const handlePlaceOrder = async (transactionReference?: string) => {
     if (!selectedAddressId) {
       alert('Please select a shipping address to proceed.');
       return;
@@ -108,6 +126,8 @@ export default function CheckoutPage() {
         body: JSON.stringify({
           addressId: selectedAddressId,
           paymentMethod,
+          transactionReference: transactionReference || undefined,
+          paymentConfirmationSubmitted: paymentMethod === 'QR_DEMO',
         }),
       });
 
@@ -127,7 +147,7 @@ export default function CheckoutPage() {
 
   if (loading) {
     return (
-      <div className="py-12 text-center text-slate-500">
+      <div className="py-16 text-center text-slate-500">
         <div className="w-12 h-12 border-4 border-brand-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
         Preparing secure checkout session...
       </div>
@@ -136,10 +156,17 @@ export default function CheckoutPage() {
 
   // Step 3: Order Confirmation Screen
   if (step === 3 && completedOrder) {
-    const shipping = JSON.parse(completedOrder.shippingAddress);
+    let shipping: any = {};
+    try {
+      shipping = JSON.parse(completedOrder.shippingAddress);
+    } catch {
+      shipping = {};
+    }
+
+    const isQR = completedOrder.paymentMethod === 'QR_DEMO';
 
     return (
-      <div className="max-w-2xl mx-auto my-8 bg-white rounded-3xl border border-slate-200/80 p-8 shadow-xl text-center space-y-6">
+      <div className="max-w-2xl mx-auto my-8 bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-10 shadow-xl text-center space-y-6">
         <div className="w-20 h-20 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto ring-8 ring-emerald-50/50 animate-bounce">
           <CheckCircle className="w-10 h-10" />
         </div>
@@ -154,35 +181,75 @@ export default function CheckoutPage() {
           </p>
         </div>
 
-        {/* Receipt Details Box */}
-        <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200/80 text-left text-xs space-y-3">
-          <div className="flex justify-between border-b border-slate-200 pb-2 font-bold text-slate-900">
-            <span>Payment Method</span>
-            <span className="text-brand-600 uppercase">{completedOrder.paymentMethod === 'COD' ? 'Cash on Delivery' : 'Demo Online Payment (Paid)'}</span>
+        {/* Demo Payment Confirmation Callout */}
+        {isQR && (
+          <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs text-left space-y-1">
+            <div className="flex items-center gap-1.5 font-black text-emerald-800">
+              <CheckCircle className="w-4 h-4 text-emerald-600" />
+              <span>Payment Confirmation Submitted</span>
+            </div>
+            <p className="text-[11px] text-emerald-700">
+              Your UPI demo payment reference{' '}
+              <strong className="font-mono text-slate-900">{completedOrder.transactionReference || 'UPI-DEMO'}</strong> has been registered. Order status is updated to <strong>{completedOrder.orderStatus}</strong>.
+            </p>
           </div>
+        )}
+
+        {/* Receipt Details Box */}
+        <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200/80 text-left text-xs space-y-3.5">
+          <div className="flex justify-between border-b border-slate-200 pb-2.5 font-bold text-slate-900">
+            <span>Payment Method</span>
+            <span className="text-brand-600 font-extrabold uppercase">
+              {completedOrder.paymentMethod === 'COD'
+                ? 'Cash on Delivery'
+                : 'QR Demo Payment (Online)'}
+            </span>
+          </div>
+
+          <div className="flex justify-between border-b border-slate-200 pb-2.5 text-slate-700">
+            <span>Payment Status</span>
+            <span className="font-extrabold text-emerald-700">
+              {completedOrder.paymentStatus}
+            </span>
+          </div>
+
+          {completedOrder.transactionReference && (
+            <div className="flex justify-between border-b border-slate-200 pb-2.5 text-slate-700">
+              <span>Transaction Reference</span>
+              <span className="font-mono font-bold text-slate-900">
+                {completedOrder.transactionReference}
+              </span>
+            </div>
+          )}
 
           <div className="space-y-1">
             <span className="font-bold text-slate-900 block">Delivery Address:</span>
-            <p className="text-slate-700">{shipping.fullName}, {shipping.phone}</p>
-            <p className="text-slate-500">{shipping.houseBuilding}, {shipping.street}, {shipping.area}, {shipping.city}, {shipping.state} - {shipping.pincode}</p>
+            <p className="text-slate-700">
+              {shipping.fullName}, {shipping.phone}
+            </p>
+            <p className="text-slate-500">
+              {shipping.houseBuilding}, {shipping.street}, {shipping.area}, {shipping.city}, {shipping.state} - {shipping.pincode}
+            </p>
           </div>
 
           <div className="border-t border-slate-200 pt-3 flex justify-between font-black text-sm text-slate-900">
-            <span>Total Amount Paid</span>
-            <span className="text-brand-600">₹{completedOrder.finalAmount.toLocaleString('en-IN')}</span>
+            <span>Total Order Amount</span>
+            <span className="text-brand-600 text-lg">
+              ₹{completedOrder.finalAmount.toLocaleString('en-IN')}
+            </span>
           </div>
         </div>
 
         <div className="flex flex-col sm:flex-row justify-center gap-3 pt-2">
           <Link
             href={`/orders/${completedOrder.id}`}
-            className="px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white font-black text-xs rounded-xl shadow-md transition"
+            className="px-6 py-3.5 bg-slate-900 hover:bg-slate-800 text-white font-black text-xs rounded-xl shadow-md transition"
           >
             Track Order Status
           </Link>
           <Link
             href="/products"
-            className="px-6 py-3 bg-brand-600 hover:bg-brand-700 text-white font-black text-xs rounded-xl shadow-md transition"
+            className="px-6 py-3.5 bg-brand-600 hover:bg-brand-700 text-white font-black text-xs rounded-xl shadow-md transition"
           >
             Continue Shopping
           </Link>
@@ -202,12 +269,20 @@ export default function CheckoutPage() {
 
         {/* Stepper Indicator */}
         <div className="flex items-center gap-3 text-xs font-bold">
-          <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl ${step === 1 ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-600'}`}>
+          <div
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl ${
+              step === 1 ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-600'
+            }`}
+          >
             <span>1. Shipping Address</span>
           </div>
           <span className="text-slate-300">→</span>
-          <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl ${step === 2 ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-600'}`}>
-            <span>2. Payment Method</span>
+          <div
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl ${
+              step === 2 ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-600'
+            }`}
+          >
+            <span>2. Payment Option</span>
           </div>
         </div>
       </div>
@@ -316,77 +391,108 @@ export default function CheckoutPage() {
               </div>
             </div>
           ) : (
-            /* STEP 2: SELECT PAYMENT METHOD */
-            <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm space-y-6">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-                <h3 className="font-black text-slate-900 text-base flex items-center gap-2">
-                  <CreditCard className="w-5 h-5 text-brand-600" /> Choose Payment Option
-                </h3>
-                <button
-                  onClick={() => setStep(1)}
-                  className="text-xs text-brand-600 font-bold hover:underline"
-                >
-                  ← Back to Address
-                </button>
-              </div>
+            /* STEP 2: SELECT PAYMENT METHOD & QR CODE PAYMENT */
+            <div className="space-y-6">
+              <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm space-y-6">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                  <h3 className="font-black text-slate-900 text-base flex items-center gap-2">
+                    <CreditCard className="w-5 h-5 text-brand-600" /> Choose Payment Method
+                  </h3>
+                  <button
+                    onClick={() => setStep(1)}
+                    className="text-xs text-brand-600 font-bold hover:underline"
+                  >
+                    ← Back to Address
+                  </button>
+                </div>
 
-              <div className="space-y-4">
-                {/* Cash on Delivery Option */}
-                <div
-                  onClick={() => setPaymentMethod('COD')}
-                  className={`p-5 rounded-2xl border-2 transition-all cursor-pointer flex items-center justify-between ${
-                    paymentMethod === 'COD'
-                      ? 'border-brand-600 bg-brand-50/40 shadow-sm'
-                      : 'border-slate-200 hover:border-slate-300'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-black text-sm">
-                      ₹
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-slate-900 text-sm">Cash on Delivery (COD)</h4>
-                      <p className="text-xs text-slate-500">Pay with cash or UPI when your parcel is delivered to your doorstep.</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Cash on Delivery Option */}
+                  <div
+                    onClick={() => setPaymentMethod('COD')}
+                    className={`p-5 rounded-2xl border-2 transition-all cursor-pointer flex flex-col justify-between ${
+                      paymentMethod === 'COD'
+                        ? 'border-brand-600 bg-brand-50/40 shadow-sm'
+                        : 'border-slate-200 hover:border-slate-300'
+                    }`}
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-black text-sm">
+                          ₹
+                        </div>
+                        {paymentMethod === 'COD' && <CheckCircle className="w-5 h-5 text-brand-600" />}
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-slate-900 text-sm">Cash on Delivery (COD)</h4>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          Pay with cash or UPI at your doorstep upon parcel delivery.
+                        </p>
+                      </div>
                     </div>
                   </div>
-                  {paymentMethod === 'COD' && <CheckCircle className="w-5 h-5 text-brand-600" />}
-                </div>
 
-                {/* Demo Online Payment Option */}
-                <div
-                  onClick={() => setPaymentMethod('ONLINE_DEMO')}
-                  className={`p-5 rounded-2xl border-2 transition-all cursor-pointer flex items-center justify-between ${
-                    paymentMethod === 'ONLINE_DEMO'
-                      ? 'border-brand-600 bg-brand-50/40 shadow-sm'
-                      : 'border-slate-200 hover:border-slate-300'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-sm">
-                      <CreditCard className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-slate-900 text-sm">Demo Online Payment (Instant)</h4>
-                      <p className="text-xs text-slate-500">Simulate UPI/NetBanking/Card payment without entering sensitive details.</p>
+                  {/* Pay using QR Code (UPI Demo) */}
+                  <div
+                    onClick={() => setPaymentMethod('QR_DEMO')}
+                    className={`p-5 rounded-2xl border-2 transition-all cursor-pointer flex flex-col justify-between ${
+                      paymentMethod === 'QR_DEMO'
+                        ? 'border-brand-600 bg-brand-50/40 shadow-sm'
+                        : 'border-slate-200 hover:border-slate-300'
+                    }`}
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="w-10 h-10 rounded-xl bg-brand-100 text-brand-700 flex items-center justify-center font-bold text-sm">
+                          <QrCode className="w-5 h-5" />
+                        </div>
+                        {paymentMethod === 'QR_DEMO' && <CheckCircle className="w-5 h-5 text-brand-600" />}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <h4 className="font-bold text-slate-900 text-sm">Pay using QR Code</h4>
+                          <span className="text-[10px] bg-brand-100 text-brand-800 font-extrabold px-2 py-0.5 rounded-full">
+                            UPI Demo
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          Scan order QR code with any UPI app & submit demo confirmation.
+                        </p>
+                      </div>
                     </div>
                   </div>
-                  {paymentMethod === 'ONLINE_DEMO' && <CheckCircle className="w-5 h-5 text-brand-600" />}
-                </div>
-              </div>
-
-              <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
-                <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
-                  <ShieldCheck className="w-4 h-4 text-emerald-600" /> Guaranteed 100% Buyer Protection
                 </div>
 
-                <button
-                  onClick={handlePlaceOrder}
-                  disabled={placingOrder}
-                  className="px-8 py-3.5 bg-brand-600 hover:bg-brand-700 text-white font-black text-xs sm:text-sm rounded-2xl shadow-xl transition disabled:opacity-50"
-                >
-                  {placingOrder ? 'Processing Order...' : `Place Order (₹${total.toLocaleString('en-IN')})`}
-                </button>
+                {/* COD Action Bar */}
+                {paymentMethod === 'COD' && (
+                  <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
+                      <ShieldCheck className="w-4 h-4 text-emerald-600" /> Cash collected only after verification
+                    </div>
+
+                    <button
+                      onClick={() => handlePlaceOrder()}
+                      disabled={placingOrder}
+                      className="px-8 py-3.5 bg-brand-600 hover:bg-brand-700 text-white font-black text-xs sm:text-sm rounded-2xl shadow-xl transition disabled:opacity-50"
+                    >
+                      {placingOrder ? 'Processing Order...' : `Place COD Order (₹${total.toLocaleString('en-IN')})`}
+                    </button>
+                  </div>
+                )}
               </div>
+
+              {/* QR Code Payment Display Section (When QR_DEMO is selected) */}
+              {paymentMethod === 'QR_DEMO' && (
+                <QRCodeDisplay
+                  amount={total}
+                  orderNumber={pendingOrderNumber}
+                  upiId={upiId}
+                  confirming={placingOrder}
+                  onPaymentConfirmed={(ref) => {
+                    handlePlaceOrder(ref);
+                  }}
+                />
+              )}
             </div>
           )}
         </div>
@@ -426,6 +532,10 @@ export default function CheckoutPage() {
             <div className="flex items-center gap-2">
               <Truck className="w-4 h-4 text-brand-600" />
               <span>Estimated Delivery: <strong>2 - 4 Business Days</strong></span>
+            </div>
+            <div className="flex items-center gap-2 text-slate-400">
+              <ShieldCheck className="w-4 h-4 text-emerald-600" />
+              <span>100% Yashodha Buyer Protection</span>
             </div>
           </div>
         </div>

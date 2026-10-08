@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import Image from 'next/image';
 import QuantitySelector from '@/components/QuantitySelector';
 import ReviewSection from '@/components/ReviewSection';
@@ -30,6 +31,7 @@ interface Product {
   reviewCount: number;
   images: string;
   category: { id: string; name: string; slug: string };
+  subcategory?: { id: string; name: string; slug: string } | null;
   reviews: Array<{
     id: string;
     rating: number;
@@ -164,7 +166,35 @@ export default function ProductDetailPage() {
   };
 
   return (
-    <div className="space-y-12">
+    <div className="space-y-6">
+      {/* Breadcrumbs Navigation */}
+      <nav className="flex items-center gap-2 text-xs text-slate-500 font-medium overflow-x-auto no-scrollbar whitespace-nowrap">
+        <Link href="/" className="hover:text-brand-600 transition">
+          Home
+        </Link>
+        <span>/</span>
+        <Link href="/categories" className="hover:text-brand-600 transition">
+          Categories
+        </Link>
+        <span>/</span>
+        <Link href={`/categories/${product.category.slug}`} className="hover:text-brand-600 transition">
+          {product.category.name}
+        </Link>
+        {product.subcategory && (
+          <>
+            <span>/</span>
+            <Link
+              href={`/categories/${product.category.slug}?subcategory=${product.subcategory.slug}`}
+              className="hover:text-brand-600 transition text-brand-600 font-bold"
+            >
+              {product.subcategory.name}
+            </Link>
+          </>
+        )}
+        <span>/</span>
+        <span className="text-slate-900 font-bold line-clamp-1 max-w-[250px]">{product.name}</span>
+      </nav>
+
       {/* Product Main Container */}
       <div className="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 shadow-sm grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
         {/* Left Column: Image Gallery */}

@@ -12,6 +12,7 @@ export async function GET(
       where: { id },
       include: {
         category: true,
+        subcategory: true,
         reviews: {
           include: {
             user: {

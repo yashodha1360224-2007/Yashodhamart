@@ -1,0 +1,23 @@
+databases:
+  - name: yashodhamart-db
+    plan: free
+    databaseName: yashodhamart
+    user: yashodha
+
+services:
+  - type: web
+    name: yashodhamart
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: yashodhamart-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: NODE_ENV
+        value: production
+      - key: PAYMENT_UPI_ID
+        value: demo-yashodhamart@okhdfcbank

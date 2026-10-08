@@ -1,17 +1,25 @@
 'use client';
 
-import { useState } from 'react';
-import { Filter, RotateCcw, Star, Check } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Filter, RotateCcw, Star, Check, ChevronDown, ChevronRight } from 'lucide-react';
 
-interface Category {
+interface Subcategory {
   id: string;
   name: string;
   slug: string;
 }
 
+interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  subcategories?: Subcategory[];
+}
+
 interface FilterProps {
   categories: Category[];
   selectedCategory: string;
+  selectedSubcategory?: string;
   minPrice: string;
   maxPrice: string;
   minRating: string;
@@ -19,6 +27,7 @@ interface FilterProps {
   inStock: boolean;
   onFilterChange: (filters: {
     category: string;
+    subcategory?: string;
     minPrice: string;
     maxPrice: string;
     minRating: string;
@@ -31,6 +40,7 @@ interface FilterProps {
 export default function ProductFilterSidebar({
   categories,
   selectedCategory,
+  selectedSubcategory = '',
   minPrice,
   maxPrice,
   minRating,
@@ -40,15 +50,22 @@ export default function ProductFilterSidebar({
   onReset,
 }: FilterProps) {
   const [cat, setCat] = useState(selectedCategory);
+  const [subCat, setSubCat] = useState(selectedSubcategory);
   const [minP, setMinP] = useState(minPrice);
   const [maxP, setMaxP] = useState(maxPrice);
   const [rating, setRating] = useState(minRating);
   const [discount, setDiscount] = useState(minDiscount);
   const [stock, setStock] = useState(inStock);
 
+  useEffect(() => {
+    setCat(selectedCategory);
+    setSubCat(selectedSubcategory);
+  }, [selectedCategory, selectedSubcategory]);
+
   const applyFilters = () => {
     onFilterChange({
       category: cat,
+      subcategory: subCat,
       minPrice: minP,
       maxPrice: maxP,
       minRating: rating,
@@ -59,6 +76,7 @@ export default function ProductFilterSidebar({
 
   const handleReset = () => {
     setCat('');
+    setSubCat('');
     setMinP('');
     setMaxP('');
     setRating('');
@@ -81,16 +99,25 @@ export default function ProductFilterSidebar({
         </button>
       </div>
 
-      {/* Category Filter */}
+      {/* Category & Subcategory Filter */}
       <div>
         <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-2.5">
-          Categories
+          Departments
         </h4>
-        <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1 text-xs">
+        <div className="space-y-1 max-h-60 overflow-y-auto pr-1 text-xs">
           <button
             onClick={() => {
               setCat('');
-              onFilterChange({ category: '', minPrice: minP, maxPrice: maxP, minRating: rating, minDiscount: discount, inStock: stock });
+              setSubCat('');
+              onFilterChange({
+                category: '',
+                subcategory: '',
+                minPrice: minP,
+                maxPrice: maxP,
+                minRating: rating,
+                minDiscount: discount,
+                inStock: stock,
+              });
             }}
             className={`w-full text-left px-3 py-1.5 rounded-lg flex items-center justify-between font-medium transition ${
               cat === '' ? 'bg-brand-50 text-brand-600 font-bold' : 'text-slate-600 hover:bg-slate-50'
@@ -99,21 +126,75 @@ export default function ProductFilterSidebar({
             <span>All Departments</span>
             {cat === '' && <Check className="w-3.5 h-3.5" />}
           </button>
-          {categories.map((c) => (
-            <button
-              key={c.id}
-              onClick={() => {
-                setCat(c.slug);
-                onFilterChange({ category: c.slug, minPrice: minP, maxPrice: maxP, minRating: rating, minDiscount: discount, inStock: stock });
-              }}
-              className={`w-full text-left px-3 py-1.5 rounded-lg flex items-center justify-between font-medium transition ${
-                cat === c.slug ? 'bg-brand-50 text-brand-600 font-bold' : 'text-slate-600 hover:bg-slate-50'
-              }`}
-            >
-              <span>{c.name}</span>
-              {cat === c.slug && <Check className="w-3.5 h-3.5" />}
-            </button>
-          ))}
+
+          {categories.map((c) => {
+            const isCatActive = cat === c.slug;
+            const hasSubcats = c.subcategories && c.subcategories.length > 0;
+
+            return (
+              <div key={c.id} className="space-y-0.5">
+                <button
+                  onClick={() => {
+                    const newCat = isCatActive && !subCat ? '' : c.slug;
+                    setCat(newCat);
+                    setSubCat('');
+                    onFilterChange({
+                      category: newCat,
+                      subcategory: '',
+                      minPrice: minP,
+                      maxPrice: maxP,
+                      minRating: rating,
+                      minDiscount: discount,
+                      inStock: stock,
+                    });
+                  }}
+                  className={`w-full text-left px-3 py-1.5 rounded-lg flex items-center justify-between font-medium transition ${
+                    isCatActive
+                      ? 'bg-brand-50 text-brand-600 font-bold'
+                      : 'text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  <span className="line-clamp-1">{c.name}</span>
+                  {isCatActive && !subCat && <Check className="w-3.5 h-3.5" />}
+                </button>
+
+                {/* Subcategories if category active */}
+                {isCatActive && hasSubcats && (
+                  <div className="pl-4 pr-1 py-1 space-y-0.5 border-l-2 border-brand-200 ml-3">
+                    {c.subcategories?.map((sub) => {
+                      const isSubActive = subCat === sub.slug;
+                      return (
+                        <button
+                          key={sub.id}
+                          onClick={() => {
+                            const newSub = isSubActive ? '' : sub.slug;
+                            setSubCat(newSub);
+                            onFilterChange({
+                              category: c.slug,
+                              subcategory: newSub,
+                              minPrice: minP,
+                              maxPrice: maxP,
+                              minRating: rating,
+                              minDiscount: discount,
+                              inStock: stock,
+                            });
+                          }}
+                          className={`w-full text-left px-2 py-1 rounded text-[11px] flex items-center justify-between transition ${
+                            isSubActive
+                              ? 'bg-brand-100 text-brand-800 font-bold'
+                              : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                          }`}
+                        >
+                          <span className="line-clamp-1">{sub.name}</span>
+                          {isSubActive && <Check className="w-3 h-3 text-brand-600" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -158,10 +239,20 @@ export default function ProductFilterSidebar({
               onClick={() => {
                 const newR = rating === r ? '' : r;
                 setRating(newR);
-                onFilterChange({ category: cat, minPrice: minP, maxPrice: maxP, minRating: newR, minDiscount: discount, inStock: stock });
+                onFilterChange({
+                  category: cat,
+                  subcategory: subCat,
+                  minPrice: minP,
+                  maxPrice: maxP,
+                  minRating: newR,
+                  minDiscount: discount,
+                  inStock: stock,
+                });
               }}
               className={`w-full text-left px-3 py-1.5 rounded-lg flex items-center gap-2 font-medium transition ${
-                rating === r ? 'bg-amber-50 text-amber-900 border border-amber-200' : 'text-slate-600 hover:bg-slate-50'
+                rating === r
+                  ? 'bg-amber-50 text-amber-900 border border-amber-200'
+                  : 'text-slate-600 hover:bg-slate-50'
               }`}
             >
               <div className="flex items-center text-amber-500">
@@ -185,10 +276,20 @@ export default function ProductFilterSidebar({
               onClick={() => {
                 const newD = discount === d ? '' : d;
                 setDiscount(newD);
-                onFilterChange({ category: cat, minPrice: minP, maxPrice: maxP, minRating: rating, minDiscount: newD, inStock: stock });
+                onFilterChange({
+                  category: cat,
+                  subcategory: subCat,
+                  minPrice: minP,
+                  maxPrice: maxP,
+                  minRating: rating,
+                  minDiscount: newD,
+                  inStock: stock,
+                });
               }}
               className={`w-full text-left px-3 py-1.5 rounded-lg font-medium transition ${
-                discount === d ? 'bg-rose-50 text-rose-700 font-bold border border-rose-200' : 'text-slate-600 hover:bg-slate-50'
+                discount === d
+                  ? 'bg-rose-50 text-rose-700 font-bold border border-rose-200'
+                  : 'text-slate-600 hover:bg-slate-50'
               }`}
             >
               {d}% or more discount
@@ -205,7 +306,15 @@ export default function ProductFilterSidebar({
             checked={stock}
             onChange={(e) => {
               setStock(e.target.checked);
-              onFilterChange({ category: cat, minPrice: minP, maxPrice: maxP, minRating: rating, minDiscount: discount, inStock: e.target.checked });
+              onFilterChange({
+                category: cat,
+                subcategory: subCat,
+                minPrice: minP,
+                maxPrice: maxP,
+                minRating: rating,
+                minDiscount: discount,
+                inStock: e.target.checked,
+              });
             }}
             className="w-4 h-4 text-brand-600 rounded border-slate-300 focus:ring-brand-500"
           />

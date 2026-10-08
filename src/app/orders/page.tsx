@@ -3,7 +3,17 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Package, ArrowRight, Clock, CheckCircle2, Truck, AlertTriangle } from 'lucide-react';
+import {
+  Package,
+  ArrowRight,
+  Clock,
+  CheckCircle2,
+  Truck,
+  AlertTriangle,
+  QrCode,
+  ShieldCheck,
+  CreditCard
+} from 'lucide-react';
 
 interface OrderItem {
   id: string;
@@ -22,6 +32,8 @@ interface Order {
   paymentMethod: string;
   paymentStatus: string;
   orderStatus: string;
+  transactionReference?: string | null;
+  paidAt?: string | null;
   createdAt: string;
   items: OrderItem[];
 }
@@ -50,7 +62,7 @@ export default function MyOrdersPage() {
 
   if (loading) {
     return (
-      <div className="py-12 text-center text-slate-500">
+      <div className="py-16 text-center text-slate-500">
         <div className="w-12 h-12 border-4 border-brand-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
         Loading your order history...
       </div>
@@ -65,7 +77,7 @@ export default function MyOrdersPage() {
         </div>
         <h2 className="text-2xl font-black text-slate-900">No Orders Placed Yet</h2>
         <p className="text-xs text-slate-500 max-w-sm mx-auto">
-          You haven&apos;t placed any orders with YashodhaMart yet. Explore our fresh collection and start shopping today!
+          You haven&apos;t placed any orders with YashodhaMart yet. Explore our fresh collection across 20 departments!
         </p>
         <Link
           href="/products"
@@ -77,86 +89,164 @@ export default function MyOrdersPage() {
     );
   }
 
-  const getStatusBadge = (status: string) => {
+  const getOrderStatusBadge = (status: string) => {
     switch (status) {
       case 'Delivered':
-        return <span className="bg-emerald-100 text-emerald-800 text-[11px] font-extrabold px-2.5 py-1 rounded-full flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" /> Delivered</span>;
+        return (
+          <span className="bg-emerald-100 text-emerald-800 text-[11px] font-extrabold px-2.5 py-1 rounded-full flex items-center gap-1">
+            <CheckCircle2 className="w-3.5 h-3.5" /> Delivered
+          </span>
+        );
       case 'Shipped':
       case 'Out for Delivery':
-        return <span className="bg-blue-100 text-blue-800 text-[11px] font-extrabold px-2.5 py-1 rounded-full flex items-center gap-1"><Truck className="w-3.5 h-3.5" /> {status}</span>;
+        return (
+          <span className="bg-blue-100 text-blue-800 text-[11px] font-extrabold px-2.5 py-1 rounded-full flex items-center gap-1">
+            <Truck className="w-3.5 h-3.5" /> {status}
+          </span>
+        );
       case 'Cancelled':
-        return <span className="bg-rose-100 text-rose-800 text-[11px] font-extrabold px-2.5 py-1 rounded-full flex items-center gap-1"><AlertTriangle className="w-3.5 h-3.5" /> Cancelled</span>;
+        return (
+          <span className="bg-rose-100 text-rose-800 text-[11px] font-extrabold px-2.5 py-1 rounded-full flex items-center gap-1">
+            <AlertTriangle className="w-3.5 h-3.5" /> Cancelled
+          </span>
+        );
+      case 'Confirmed':
+        return (
+          <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-extrabold px-2.5 py-1 rounded-full flex items-center gap-1">
+            <CheckCircle2 className="w-3.5 h-3.5" /> Confirmed
+          </span>
+        );
       default:
-        return <span className="bg-amber-100 text-amber-800 text-[11px] font-extrabold px-2.5 py-1 rounded-full flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> {status}</span>;
+        return (
+          <span className="bg-amber-100 text-amber-800 text-[11px] font-extrabold px-2.5 py-1 rounded-full flex items-center gap-1">
+            <Clock className="w-3.5 h-3.5" /> {status}
+          </span>
+        );
     }
   };
 
+  const getPaymentBadge = (status: string, method: string) => {
+    if (status === 'PAID') {
+      return (
+        <span className="bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-2 py-0.5 rounded-md flex items-center gap-1">
+          <CheckCircle2 className="w-3 h-3" /> Paid
+        </span>
+      );
+    }
+    if (status === 'CONFIRMATION_SUBMITTED') {
+      return (
+        <span className="bg-blue-100 text-blue-800 text-[10px] font-extrabold px-2 py-0.5 rounded-md flex items-center gap-1">
+          <Clock className="w-3 h-3" /> Demo Confirmation Submitted
+        </span>
+      );
+    }
+    if (status === 'FAILED') {
+      return (
+        <span className="bg-rose-100 text-rose-800 text-[10px] font-extrabold px-2 py-0.5 rounded-md flex items-center gap-1">
+          <AlertTriangle className="w-3 h-3" /> Failed
+        </span>
+      );
+    }
+    return (
+      <span className="bg-amber-100 text-amber-800 text-[10px] font-extrabold px-2 py-0.5 rounded-md flex items-center gap-1">
+        <Clock className="w-3 h-3" /> Pending ({method === 'COD' ? 'Pay on Delivery' : 'Awaiting Payment'})
+      </span>
+    );
+  };
+
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <div className="space-y-6 max-w-4xl mx-auto py-2">
       <div>
         <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
           <Package className="w-6 h-6 text-brand-600" /> My Orders ({orders.length})
         </h1>
-        <p className="text-xs text-slate-500 font-medium mt-0.5">Track shipment pipeline and view order receipts</p>
+        <p className="text-xs text-slate-500 font-medium mt-0.5">
+          Track fulfillment status, view payment receipts, and download order details
+        </p>
       </div>
 
       <div className="space-y-4">
-        {orders.map((order) => (
-          <div
-            key={order.id}
-            className="bg-white rounded-3xl border border-slate-200/80 p-5 sm:p-6 shadow-sm hover:shadow-md transition space-y-4"
-          >
-            {/* Top Bar */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-3 gap-2">
-              <div className="space-y-0.5">
-                <span className="text-xs font-black text-slate-900 font-mono">Order {order.orderNumber}</span>
-                <p className="text-[11px] text-slate-400">
-                  Placed on {new Date(order.createdAt).toLocaleDateString('en-IN', {
-                    day: 'numeric',
-                    month: 'short',
-                    year: 'numeric',
-                  })}
-                </p>
-              </div>
+        {orders.map((order) => {
+          const isQR = order.paymentMethod === 'QR_DEMO';
+          const methodDisplay = isQR ? 'QR Demo Payment' : 'Cash on Delivery';
+          const totalQty = order.items.reduce((acc, it) => acc + it.quantity, 0);
 
-              <div className="flex items-center gap-3">
-                {getStatusBadge(order.orderStatus)}
-                <span className="text-sm font-black text-slate-900">
-                  ₹{order.finalAmount.toLocaleString('en-IN')}
-                </span>
-              </div>
-            </div>
-
-            {/* Items Summary Row */}
-            <div className="flex items-center gap-4 overflow-x-auto py-1">
-              {order.items.map((item) => (
-                <div key={item.id} className="flex items-center gap-2 flex-shrink-0">
-                  <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-slate-100 border border-slate-200">
-                    <Image src={item.productImage} alt={item.productName} fill className="object-cover" />
+          return (
+            <div
+              key={order.id}
+              className="bg-white rounded-3xl border border-slate-200/80 p-5 sm:p-6 shadow-sm hover:shadow-md transition space-y-4"
+            >
+              {/* Top Bar */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-3 gap-2">
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-black text-slate-900 font-mono">
+                      Order #{order.orderNumber}
+                    </span>
+                    {getOrderStatusBadge(order.orderStatus)}
                   </div>
-                  <div className="text-xs max-w-[150px]">
-                    <p className="font-bold text-slate-800 line-clamp-1">{item.productName}</p>
-                    <span className="text-[10px] text-slate-500">Qty: {item.quantity}</span>
+                  <p className="text-[11px] text-slate-400">
+                    Placed on{' '}
+                    {new Date(order.createdAt).toLocaleDateString('en-IN', {
+                      day: 'numeric',
+                      month: 'short',
+                      year: 'numeric',
+                    })}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <div className="text-right">
+                    <span className="text-xs text-slate-400 block">Total ({totalQty} items)</span>
+                    <span className="text-base font-black text-slate-900">
+                      ₹{order.finalAmount.toLocaleString('en-IN')}
+                    </span>
                   </div>
                 </div>
-              ))}
-            </div>
+              </div>
 
-            {/* Bottom Actions */}
-            <div className="pt-2 flex justify-between items-center text-xs border-t border-slate-100">
-              <span className="text-slate-500">
-                Payment: <strong className="text-slate-800">{order.paymentMethod === 'COD' ? 'Cash on Delivery' : 'Online Payment'}</strong>
-              </span>
+              {/* Items Summary Row */}
+              <div className="flex items-center gap-4 overflow-x-auto py-1">
+                {order.items.map((item) => (
+                  <div key={item.id} className="flex items-center gap-2.5 flex-shrink-0 bg-slate-50 p-2 rounded-xl border border-slate-100">
+                    <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-white border border-slate-200 flex-shrink-0">
+                      <Image src={item.productImage} alt={item.productName} fill className="object-cover" />
+                    </div>
+                    <div className="text-xs max-w-[160px]">
+                      <p className="font-bold text-slate-800 line-clamp-1">{item.productName}</p>
+                      <span className="text-[10px] text-slate-500 font-medium">Qty: {item.quantity} × ₹{item.price}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
 
-              <Link
-                href={`/orders/${order.id}`}
-                className="font-bold text-brand-600 hover:text-brand-700 flex items-center gap-1 hover:underline"
-              >
-                View Order Details & Status →
-              </Link>
+              {/* Payment & Action Bottom Bar */}
+              <div className="pt-3 flex flex-col sm:flex-row justify-between items-start sm:items-center text-xs border-t border-slate-100 gap-2">
+                <div className="flex flex-wrap items-center gap-2 text-slate-600">
+                  <span className="flex items-center gap-1 font-semibold">
+                    {isQR ? <QrCode className="w-3.5 h-3.5 text-brand-600" /> : <CreditCard className="w-3.5 h-3.5 text-emerald-600" />}
+                    Payment: <strong className="text-slate-900">{methodDisplay}</strong>
+                  </span>
+                  <span>•</span>
+                  {getPaymentBadge(order.paymentStatus, order.paymentMethod)}
+                  {order.transactionReference && (
+                    <>
+                      <span>•</span>
+                      <span className="text-[10px] font-mono text-slate-500">Ref: {order.transactionReference}</span>
+                    </>
+                  )}
+                </div>
+
+                <Link
+                  href={`/orders/${order.id}`}
+                  className="font-bold text-brand-600 hover:text-brand-700 flex items-center gap-1 hover:underline whitespace-nowrap"
+                >
+                  View Order Details & Status →
+                </Link>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -36,13 +36,24 @@ model Admin {
 }
 
 model Category {
-  id          String    @id @default(uuid())
-  name        String    @unique
-  slug        String    @unique
-  description String?
-  image       String?
-  products    Product[]
-  createdAt   DateTime  @default(now())
+  id                  String     @id @default(uuid())
+  name                String
+  slug                String     @unique
+  description         String?
+  image               String?
+  isActive            Boolean    @default(true)
+  parentId            String?
+  parent              Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  subcategories       Category[] @relation("CategoryHierarchy")
+  products            Product[]  @relation("CategoryProducts")
+  subcategoryProducts Product[]  @relation("SubcategoryProducts")
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @default(now()) @updatedAt
+
+  @@index([name])
+  @@index([slug])
+  @@index([parentId])
+  @@index([isActive])
 }
 
 model Product {
@@ -59,7 +70,9 @@ model Product {
   isNewArrival    Boolean        @default(false)
   isActive        Boolean        @default(true)
   categoryId      String
-  category        Category       @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  category        Category       @relation("CategoryProducts", fields: [categoryId], references: [id], onDelete: Cascade)
+  subcategoryId   String?
+  subcategory     Category?      @relation("SubcategoryProducts", fields: [subcategoryId], references: [id], onDelete: SetNull)
   images          String         // JSON string array of URLs
   cartItems       CartItem[]
   wishlistItems   WishlistItem[]
@@ -67,6 +80,11 @@ model Product {
   reviews         Review[]
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
+
+  @@index([slug])
+  @@index([categoryId])
+  @@index([subcategoryId])
+  @@index([isActive])
 }
 
 model Cart {
@@ -124,21 +142,28 @@ model Address {
 }
 
 model Order {
-  id              String      @id @default(uuid())
-  orderNumber     String      @unique
-  userId          String
-  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  totalAmount     Float
-  discountAmount  Float       @default(0)
-  deliveryFee     Float       @default(0)
-  finalAmount     Float
-  paymentMethod   String
-  paymentStatus   String
-  orderStatus     String      // Pending, Confirmed, Packed, Shipped, Out for Delivery, Delivered, Cancelled
-  shippingAddress String      // JSON snapshot string
-  items           OrderItem[]
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+  id                   String      @id @default(uuid())
+  orderNumber          String      @unique
+  userId               String
+  user                 User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  totalAmount          Float
+  discountAmount       Float       @default(0)
+  deliveryFee          Float       @default(0)
+  finalAmount          Float
+  paymentMethod        String      // COD, QR_DEMO
+  paymentStatus        String      // PENDING, CONFIRMATION_SUBMITTED, PAID, FAILED
+  orderStatus          String      // Pending, Confirmed, Packed, Shipped, Out for Delivery, Delivered, Cancelled
+  shippingAddress      String      // JSON snapshot string
+  transactionReference String?
+  paidAt               DateTime?
+  items                OrderItem[]
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+
+  @@index([userId])
+  @@index([orderNumber])
+  @@index([orderStatus])
+  @@index([paymentStatus])
 }
 
 model OrderItem {

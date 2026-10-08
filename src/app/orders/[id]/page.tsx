@@ -26,6 +26,8 @@ interface Order {
   paymentMethod: string;
   paymentStatus: string;
   orderStatus: string;
+  transactionReference?: string | null;
+  paidAt?: string | null;
   shippingAddress: string; // JSON snapshot
   createdAt: string;
   items: OrderItem[];
@@ -212,11 +214,25 @@ export default function OrderDetailPage() {
             </p>
           </div>
 
-          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5">
             <span className="font-bold text-slate-900 block mb-1">Payment & Billing</span>
-            <p className="text-slate-700">Method: <strong>{order.paymentMethod === 'COD' ? 'Cash on Delivery' : 'Online Demo Payment'}</strong></p>
-            <p className="text-slate-700">Status: <strong className="text-emerald-700">{order.paymentStatus}</strong></p>
-            <p className="text-slate-500">Delivery Fee: ₹{order.deliveryFee}</p>
+            <p className="text-slate-700">
+              Method: <strong>{order.paymentMethod === 'COD' ? 'Cash on Delivery (COD)' : 'QR Demo Payment (UPI)'}</strong>
+            </p>
+            <p className="text-slate-700">
+              Payment Status: <strong className={order.paymentStatus === 'PAID' ? 'text-emerald-700' : 'text-blue-700'}>{order.paymentStatus}</strong>
+            </p>
+            {order.transactionReference && (
+              <p className="text-slate-700 font-mono text-[11px]">
+                Reference / UTR: <strong className="text-slate-900">{order.transactionReference}</strong>
+              </p>
+            )}
+            {order.paidAt && (
+              <p className="text-slate-500 text-[11px]">
+                Paid At: {new Date(order.paidAt).toLocaleString('en-IN')}
+              </p>
+            )}
+            <p className="text-slate-500 pt-0.5">Delivery Fee: {order.deliveryFee === 0 ? 'FREE' : `₹${order.deliveryFee}`}</p>
           </div>
         </div>
 

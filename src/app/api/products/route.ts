@@ -9,6 +9,7 @@ export async function GET(request: Request) {
 
     const query = searchParams.get('q')?.trim() || '';
     const categorySlug = searchParams.get('category') || '';
+    const subcategorySlug = searchParams.get('subcategory') || '';
     const minPrice = searchParams.get('minPrice') ? parseFloat(searchParams.get('minPrice')!) : undefined;
     const maxPrice = searchParams.get('maxPrice') ? parseFloat(searchParams.get('maxPrice')!) : undefined;
     const minRating = searchParams.get('minRating') ? parseFloat(searchParams.get('minRating')!) : undefined;
@@ -18,44 +19,56 @@ export async function GET(request: Request) {
     const isFeatured = searchParams.get('featured') === 'true';
     const isNewArrival = searchParams.get('newArrival') === 'true';
 
-    const where: any = {
-      isActive: true,
-    };
+    const andConditions: any[] = [{ isActive: true }];
 
-    if (isFeatured) where.isFeatured = true;
-    if (isNewArrival) where.isNewArrival = true;
+    if (isFeatured) andConditions.push({ isFeatured: true });
+    if (isNewArrival) andConditions.push({ isNewArrival: true });
 
     if (query) {
-      where.OR = [
-        { name: { contains: query } },
-        { description: { contains: query } },
-        { category: { name: { contains: query } } },
-      ];
+      andConditions.push({
+        OR: [
+          { name: { contains: query } },
+          { description: { contains: query } },
+          { category: { name: { contains: query } } },
+          { subcategory: { name: { contains: query } } },
+        ],
+      });
     }
 
-    if (categorySlug) {
-      where.category = {
-        slug: categorySlug,
-      };
+    if (subcategorySlug) {
+      andConditions.push({
+        subcategory: { slug: subcategorySlug },
+      });
+    } else if (categorySlug) {
+      andConditions.push({
+        OR: [
+          { category: { slug: categorySlug } },
+          { subcategory: { slug: categorySlug } },
+          { subcategory: { parent: { slug: categorySlug } } },
+        ],
+      });
     }
 
     if (minPrice !== undefined || maxPrice !== undefined) {
-      where.price = {};
-      if (minPrice !== undefined && !isNaN(minPrice)) where.price.gte = minPrice;
-      if (maxPrice !== undefined && !isNaN(maxPrice)) where.price.lte = maxPrice;
+      const priceCondition: any = {};
+      if (minPrice !== undefined && !isNaN(minPrice)) priceCondition.gte = minPrice;
+      if (maxPrice !== undefined && !isNaN(maxPrice)) priceCondition.lte = maxPrice;
+      andConditions.push({ price: priceCondition });
     }
 
     if (minRating !== undefined && !isNaN(minRating)) {
-      where.rating = { gte: minRating };
+      andConditions.push({ rating: { gte: minRating } });
     }
 
     if (minDiscount !== undefined && !isNaN(minDiscount)) {
-      where.discountPercent = { gte: minDiscount };
+      andConditions.push({ discountPercent: { gte: minDiscount } });
     }
 
     if (inStockOnly) {
-      where.stock = { gt: 0 };
+      andConditions.push({ stock: { gt: 0 } });
     }
+
+    const where = { AND: andConditions };
 
     let orderBy: any = { reviewCount: 'desc' };
     if (sortBy === 'newest') orderBy = { createdAt: 'desc' };
@@ -71,9 +84,19 @@ export async function GET(request: Request) {
           category: {
             select: { id: true, name: true, slug: true },
           },
+          subcategory: {
+            select: { id: true, name: true, slug: true },
+          },
         },
       }),
       prisma.category.findMany({
+        where: { parentId: null, isActive: true },
+        include: {
+          subcategories: {
+            where: { isActive: true },
+            orderBy: { name: 'asc' },
+          },
+        },
         orderBy: { name: 'asc' },
       }),
     ]);
@@ -84,9 +107,9 @@ export async function GET(request: Request) {
       total: products.length,
     });
   } catch (error) {
-    console.error("Fetch products error:", error);
+    console.error('Fetch products error:', error);
     return NextResponse.json(
-      { error: "Failed to fetch products." },
+      { error: 'Failed to fetch products.' },
       { status: 500 }
     );
   }

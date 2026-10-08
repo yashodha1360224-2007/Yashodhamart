@@ -9,7 +9,8 @@ import {
   Users,
   LogOut,
   ShieldCheck,
-  Store
+  Store,
+  Layers
 } from 'lucide-react';
 
 export default function AdminSidebar() {
@@ -28,6 +29,7 @@ export default function AdminSidebar() {
 
   const navItems = [
     { name: 'Dashboard Overview', href: '/admin/dashboard', icon: LayoutDashboard },
+    { name: 'Category Management', href: '/admin/categories', icon: Layers },
     { name: 'Product Management', href: '/admin/products', icon: Package },
     { name: 'Order Pipeline', href: '/admin/orders', icon: ShoppingBag },
     { name: 'User Management', href: '/admin/users', icon: Users },
