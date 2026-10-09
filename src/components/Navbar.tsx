@@ -323,8 +323,68 @@ export default function Navbar() {
 
       {/* Mobile Menu Drawer */}
       {isMobileMenuOpen && (
-        <div className="md:hidden bg-white border-b border-slate-200 px-4 py-4 space-y-3">
-          <div className="flex items-center justify-between">
+        <div className="md:hidden bg-white border-b border-slate-200 px-4 py-4 space-y-4 animate-in fade-in slide-in-from-top-2 duration-150">
+          {/* User Status / Login Buttons */}
+          {user ? (
+            <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-2xl space-y-2.5">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-brand-600 text-white font-bold flex items-center justify-center text-sm shadow-sm">
+                  {user.name.charAt(0).toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-bold text-slate-900 truncate">{user.name}</p>
+                  <p className="text-[11px] text-slate-500 truncate">{user.email}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-200/60 text-xs font-semibold">
+                <Link
+                  href="/profile"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="p-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:text-brand-600 flex items-center gap-1.5 justify-center"
+                >
+                  <User className="w-3.5 h-3.5 text-slate-400" /> Account
+                </Link>
+                <Link
+                  href="/orders"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="p-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:text-brand-600 flex items-center gap-1.5 justify-center"
+                >
+                  <Package className="w-3.5 h-3.5 text-slate-400" /> Orders
+                </Link>
+              </div>
+              <button
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  handleLogout();
+                }}
+                className="w-full py-2 text-center text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-xl flex items-center justify-center gap-1.5 transition"
+              >
+                <LogOut className="w-3.5 h-3.5" /> Sign Out
+              </button>
+            </div>
+          ) : (
+            <div className="p-3 bg-brand-50/50 border border-brand-100 rounded-2xl space-y-2">
+              <p className="text-xs font-semibold text-brand-900">Welcome to YashodhaMart</p>
+              <div className="grid grid-cols-2 gap-2">
+                <Link
+                  href="/login"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="py-2.5 px-3 bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs rounded-xl text-center shadow-sm transition flex items-center justify-center gap-1"
+                >
+                  <User className="w-3.5 h-3.5" /> Sign In
+                </Link>
+                <Link
+                  href="/register"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="py-2.5 px-3 bg-white border border-slate-200 hover:border-brand-500 text-slate-800 font-bold text-xs rounded-xl text-center transition"
+                >
+                  Register
+                </Link>
+              </div>
+            </div>
+          )}
+
+          <div className="flex items-center justify-between pt-1">
             <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Browse Categories</p>
             <Link
               href="/categories"
@@ -334,20 +394,20 @@ export default function Navbar() {
               All 20 Departments →
             </Link>
           </div>
-          <div className="grid grid-cols-2 gap-2 text-xs font-medium">
+          <div className="grid grid-cols-2 gap-2 text-xs font-medium max-h-60 overflow-y-auto pr-1">
             {categories.map((cat) => (
               <Link
                 key={cat.slug}
                 href={cat.path}
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="p-2 rounded-lg bg-slate-50 hover:bg-brand-50 hover:text-brand-600 transition"
+                className="p-2.5 rounded-xl bg-slate-50 hover:bg-brand-50 hover:text-brand-600 transition flex items-center gap-2"
               >
                 {cat.name}
               </Link>
             ))}
           </div>
           <div className="pt-2 border-t border-slate-100 flex justify-between items-center text-xs">
-            <Link href="/admin/login" onClick={() => setIsMobileMenuOpen(false)} className="text-slate-500 flex items-center gap-1 font-semibold">
+            <Link href="/admin/login" onClick={() => setIsMobileMenuOpen(false)} className="text-slate-500 hover:text-brand-600 flex items-center gap-1.5 font-semibold transition">
               <ShieldCheck className="w-4 h-4 text-brand-600" /> Admin Login Portal
             </Link>
           </div>

@@ -22,15 +22,18 @@ export async function createSession(payload: UserSessionPayload) {
     .setExpirationTime('7d')
     .sign(SECRET_KEY);
 
-  // Store in database Session table as well
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-  await prisma.session.create({
-    data: {
-      userId: payload.userId,
-      token,
-      expiresAt,
-    },
-  });
+
+  // Store user session in database Session table (User relation)
+  if (payload.role !== 'ADMIN') {
+    await prisma.session.create({
+      data: {
+        userId: payload.userId,
+        token,
+        expiresAt,
+      },
+    });
+  }
 
   const cookieStore = cookies();
   cookieStore.set(COOKIE_NAME, token, {
@@ -53,6 +56,14 @@ export async function getSession(): Promise<UserSessionPayload | null> {
   try {
     const verified = await jwtVerify(token, SECRET_KEY);
     const payload = verified.payload as unknown as UserSessionPayload;
+
+    if (payload.role === 'ADMIN') {
+      const admin = await prisma.admin.findUnique({
+        where: { id: payload.userId },
+      });
+      if (!admin) return null;
+      return payload;
+    }
 
     // Verify token exists in database session table
     const dbSession = await prisma.session.findUnique({

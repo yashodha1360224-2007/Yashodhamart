@@ -67,6 +67,7 @@ export default function Footer() {
           <div>
             <h5 className="text-sm font-bold text-white mb-3">Customer Care</h5>
             <ul className="space-y-2 text-xs">
+              <li><Link href="/login" className="hover:text-brand-400 transition">Customer Sign In</Link></li>
               <li><Link href="/profile" className="hover:text-brand-400 transition">My Account</Link></li>
               <li><Link href="/orders" className="hover:text-brand-400 transition">Track Your Order</Link></li>
               <li><Link href="/wishlist" className="hover:text-brand-400 transition">Saved Wishlist</Link></li>

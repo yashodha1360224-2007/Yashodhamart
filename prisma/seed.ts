@@ -200,7 +200,7 @@ const CATEGORIES_DATA: CategoryDef[] = [
       { name: 'Competitive Exam Books', slug: 'competitive-exam-books', description: 'UPSC, SSC, Banking, JEE & NEET prep guides' },
       { name: 'Fiction', slug: 'fiction-books', description: 'Indian thrillers, classic literature & sci-fi novels' },
       { name: 'Non-Fiction', slug: 'non-fiction-books', description: 'Biographies, history, self-help & productivity' },
-      { name: 'Children’s Books', slug: 'childrens-books', description: 'Panchatantra, picture story books & rhymes' },
+      { name: "Children's Books", slug: 'childrens-books', description: 'Panchatantra, picture story books & rhymes' },
       { name: 'Computer & Technology', slug: 'computer-tech-books', description: 'Python, DSA, Web dev & AI engineering guides' },
       { name: 'Engineering Books', slug: 'engineering-books', description: 'Mechanical, electrical & civil engineering textbooks' },
     ],
@@ -1040,7 +1040,7 @@ const PRODUCTS_DATA = [
     reviewCount: 190,
     isFeatured: false,
     isNewArrival: false,
-    images: ['https://images.unsplash.com/photo-1584992236310-6edddc08acff?auto=format&fit=crop&q=80&w=800'],
+    images: ['https://images.unsplash.com/photo-1590736969955-71cc94801759?auto=format&fit=crop&q=80&w=800'],
   },
   {
     name: 'Premium Opalware 33-Piece Dinnerware Service Set for 6',
@@ -1087,7 +1087,7 @@ const PRODUCTS_DATA = [
     reviewCount: 110,
     isFeatured: true,
     isNewArrival: false,
-    images: ['https://images.unsplash.com/photo-1584992236310-6edddc08acff?auto=format&fit=crop&q=80&w=800'],
+    images: ['https://images.unsplash.com/photo-1571175443880-49e1d25b2bc5?auto=format&fit=crop&q=80&w=800'],
   },
   {
     name: '7kg Fully Automatic Top Load Washing Machine with Smart Inverter',
@@ -1117,7 +1117,7 @@ const PRODUCTS_DATA = [
     reviewCount: 215,
     isFeatured: false,
     isNewArrival: true,
-    images: ['https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&q=80&w=800'],
+    images: ['https://images.unsplash.com/photo-1565183997392-2f6f122e5912?auto=format&fit=crop&q=80&w=800'],
   },
   {
     name: '20L Convection Microwave Oven with 100 Indian Auto Cook Menus',
@@ -1395,7 +1395,7 @@ const PRODUCTS_DATA = [
     reviewCount: 310,
     isFeatured: true,
     isNewArrival: false,
-    images: ['https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?auto=format&fit=crop&q=80&w=800'],
+    images: ['https://images.unsplash.com/photo-1544126592-807ade215a0b?auto=format&fit=crop&q=80&w=800'],
   },
   {
     name: 'Tear-Free Gentle Nourishing Baby Body Wash & Shampoo (400ml)',
@@ -1425,7 +1425,7 @@ const PRODUCTS_DATA = [
     reviewCount: 135,
     isFeatured: false,
     isNewArrival: false,
-    images: ['https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=800'],
+    images: ['https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?auto=format&fit=crop&q=80&w=800'],
   },
   {
     name: 'Pure Multigrain Baby Cereal with Banana & Apple (300g)',
@@ -1611,7 +1611,7 @@ const PRODUCTS_DATA = [
     reviewCount: 110,
     isFeatured: true,
     isNewArrival: false,
-    images: ['https://images.unsplash.com/photo-1489824904134-891ab64532f1?auto=format&fit=crop&q=80&w=800'],
+    images: ['https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&q=80&w=800'],
   },
   {
     name: 'ISI & DOT Certified Full Face Aerodynamic Motorcycle Helmet',
@@ -1656,7 +1656,7 @@ const PRODUCTS_DATA = [
     reviewCount: 160,
     isFeatured: false,
     isNewArrival: true,
-    images: ['https://images.unsplash.com/photo-1580273916550-e323be2ae537?auto=format&fit=crop&q=80&w=800'],
+    images: ['https://images.unsplash.com/photo-1486006920555-c77dce18193b?auto=format&fit=crop&q=80&w=800'],
   },
   {
     name: 'Universal Waterproof Motorcycle Body Cover with Mirror Pockets',
@@ -1671,7 +1671,7 @@ const PRODUCTS_DATA = [
     reviewCount: 85,
     isFeatured: false,
     isNewArrival: false,
-    images: ['https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&q=80&w=800'],
+    images: ['https://images.unsplash.com/photo-1558981854-383395b0f459?auto=format&fit=crop&q=80&w=800'],
   },
 
   // 18. HOME IMPROVEMENT
@@ -1703,7 +1703,7 @@ const PRODUCTS_DATA = [
     reviewCount: 290,
     isFeatured: false,
     isNewArrival: true,
-    images: ['https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&q=80&w=800'],
+    images: ['https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&q=80&w=800'],
   },
   {
     name: 'Energy Efficient 10W B22 LED Cool Day White Bulbs (Pack of 6)',
@@ -1872,7 +1872,7 @@ const PRODUCTS_DATA = [
     reviewCount: 310,
     isFeatured: false,
     isNewArrival: true,
-    images: ['https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&q=80&w=800'],
+    images: ['https://images.unsplash.com/photo-1583863788434-e58a36330cf0?auto=format&fit=crop&q=80&w=800'],
   },
   {
     name: '6-Piece Compression Packing Cubes Luggage Organizer Set',
@@ -1887,7 +1887,7 @@ const PRODUCTS_DATA = [
     reviewCount: 180,
     isFeatured: false,
     isNewArrival: false,
-    images: ['https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&q=80&w=800'],
+    images: ['https://images.unsplash.com/photo-1565026057447-bc90a3dceb87?auto=format&fit=crop&q=80&w=800'],
   },
   {
     name: 'Ergonomic Memory Foam Flight Travel Neck Pillow with Eye Mask',
@@ -2057,6 +2057,57 @@ async function main() {
   }
 
   console.log(`Seeded ${productCount} sample products across all 20 categories.`);
+
+  // Clean up any legacy products not in current catalog
+  const validProdSlugs = PRODUCTS_DATA.map((p) => p.slug);
+  const defaultProduct = await prisma.product.findFirst({ where: { slug: validProdSlugs[0] } });
+
+  if (defaultProduct) {
+    const legacyProducts = await prisma.product.findMany({
+      where: { slug: { notIn: validProdSlugs } },
+      select: { id: true, name: true }
+    });
+
+    for (const leg of legacyProducts) {
+      const firstWord = leg.name.split(' ')[0] || '';
+      const matched = (firstWord ? await prisma.product.findFirst({
+        where: {
+          slug: { in: validProdSlugs },
+          name: { contains: firstWord }
+        }
+      }) : null) || defaultProduct;
+
+      await prisma.orderItem.updateMany({
+        where: { productId: leg.id },
+        data: {
+          productId: matched.id,
+          productName: matched.name,
+          productImage: JSON.parse(matched.images)[0] || '',
+        }
+      });
+    }
+
+    await prisma.cartItem.deleteMany({
+      where: { product: { slug: { notIn: validProdSlugs } } },
+    });
+    await prisma.wishlistItem.deleteMany({
+      where: { product: { slug: { notIn: validProdSlugs } } },
+    });
+    await prisma.review.deleteMany({
+      where: { product: { slug: { notIn: validProdSlugs } } },
+    });
+    await prisma.product.deleteMany({
+      where: { slug: { notIn: validProdSlugs } },
+    });
+  }
+
+  // Clean up any obsolete categories that are no longer in CATEGORIES_DATA
+  const validCatSlugs = CATEGORIES_DATA.map((c) => c.slug);
+  const validSubSlugs = CATEGORIES_DATA.flatMap((c) => c.subcategories.map((s) => s.slug));
+  await prisma.category.deleteMany({
+    where: { slug: { notIn: [...validCatSlugs, ...validSubSlugs] } },
+  });
+
 
   // 6. Ensure at least one sample order exists for demo testing
   const existingOrder = await prisma.order.findFirst({
