@@ -27,8 +27,8 @@ RUN npx prisma generate
 # Copy the rest of the application code
 COPY . .
 
-# Set placeholder DATABASE_URL for Next.js build step
-ENV DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
+# Set build-time DATABASE_URL for Next.js build step
+ENV DATABASE_URL="file:/app/prisma/dev.db"
 
 # Build Next.js application
 RUN npm run build

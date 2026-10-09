@@ -71,10 +71,21 @@ export async function POST(request: Request) {
       },
       { status: 201 }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Registration error:", error);
+
+    if (error?.code === 'P2002') {
+      return NextResponse.json(
+        { error: "An account with this email address already exists. Please login instead." },
+        { status: 409 }
+      );
+    }
+
     return NextResponse.json(
-      { error: "An unexpected error occurred during registration. Please try again." },
+      {
+        error: "An unexpected error occurred during registration. Please try again.",
+        details: process.env.NODE_ENV !== 'production' ? error?.message : undefined,
+      },
       { status: 500 }
     );
   }

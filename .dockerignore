@@ -5,7 +5,7 @@ node_modules
 .env
 .env*.local
 *.tsbuildinfo
-prisma/dev.db
+# prisma/dev.db is included as SQLite database fallback
 prisma/dev.db-journal
 README.md
 WhatsApp.lnk
